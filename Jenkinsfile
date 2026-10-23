@@ -5,6 +5,10 @@ pipeline {
     environment {
         DOCKERHUB_USERNAME = 'vishwanath57'
         IMAGE_NAME = 'cicd-webapp'
+        EC2_HOST = '15.252.236.50'
+        EC2_USER = 'ubuntu'
+        CONTAINER_NAME = 'cicd-webapp'
+        APP_PORT = '5000'
     }
 
     stages {
@@ -67,15 +71,43 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(credentials: ['ec2-deploy-key']) {
+                    sh '''
+                        set -eu
+
+                        echo "Connecting to EC2 and deploying application..."
+
+                        ssh -o BatchMode=yes \
+                            -o ConnectTimeout=15 \
+                            ${EC2_USER}@${EC2_HOST} \
+                            "sudo docker pull ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER} &&
+                             (sudo docker stop ${CONTAINER_NAME} || true) &&
+                             (sudo docker rm ${CONTAINER_NAME} || true) &&
+                             sudo docker run -d \
+                               --name ${CONTAINER_NAME} \
+                               --restart unless-stopped \
+                               -p ${APP_PORT}:5000 \
+                               ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER} &&
+                             sleep 3 &&
+                             sudo docker inspect -f '{{.State.Running}}' ${CONTAINER_NAME} | grep -qx true"
+
+                        echo "Deployment completed successfully."
+                    '''
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo 'CI pipeline succeeded and Docker images were published!'
+            echo 'CI/CD pipeline succeeded. Application deployed to EC2!'
         }
 
         failure {
-            echo 'Pipeline failed. Check the Console Output for details.'
+            echo 'Pipeline failed. Check Console Output for details.'
         }
 
         always {
