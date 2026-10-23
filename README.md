@@ -42,37 +42,116 @@ The objective is simple:
 - Container replacement and running-state verification.
 - Git-based source code management.
 
+
 ---
 
-## Architecture
+## System Architecture
+
+<div align="center">
+
+### End-to-End Automated Deployment Workflow
+
+**SOURCE CODE → CONTINUOUS INTEGRATION → CONTINUOUS DELIVERY → CLOUD**
+
+</div>
 
 ```mermaid
-flowchart TD
-    A["Developer<br/>Writes Application Code"]
-    B["GitHub Repository"]
-    C["Jenkins CI/CD Pipeline"]
-    D["Install Dependencies"]
-    E["Run Unit Tests"]
-    F["Build Docker Image"]
-    G["Push Image to Docker Hub"]
-    H["SSH Deployment to AWS EC2"]
-    I["Pull New Image"]
-    J["Replace Existing Container"]
-    K["Running Flask Application"]
+flowchart TB
+    %% SOURCE CONTROL
+    subgraph SOURCE["01 · SOURCE CONTROL"]
+        direction TB
+        DEV["Developer<br/>Writes & Tests Code"]
+        GH[("GitHub Repository<br/>app.py · test_app.py")]
+        DEV -->|"Git Push"| GH
+    end
 
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E -->|Tests pass| F
-    F --> G
-    G --> H
-    H --> I
-    I --> J
-    J --> K
+    %% CI
+    subgraph CI["02 · CONTINUOUS INTEGRATION"]
+        direction TB
+        J["Jenkins Pipeline"]
+        DEP["Install Python Dependencies"]
+        TEST{"Unit Tests<br/>Passed?"}
+        BUILD["Build Docker Image<br/>Tag: BUILD_NUMBER + latest"]
 
-    E -.->|Tests fail| L["Stop Pipeline"]
+        J --> DEP --> TEST
+        TEST -->|"PASS"| BUILD
+    end
+
+    %% REGISTRY
+    subgraph REGISTRY["03 · IMAGE REGISTRY"]
+        direction TB
+        DH[("Docker Hub<br/>vishwanath57/cicd-webapp")]
+        TAG["Versioned Image<br/>Ready for Deployment"]
+        DH --> TAG
+    end
+
+    %% CD
+    subgraph CD["04 · CONTINUOUS DEPLOYMENT"]
+        direction TB
+        SSH["Secure SSH Connection"]
+        EC2["AWS EC2 · Ubuntu"]
+        PULL["Pull New Docker Image"]
+        REPLACE["Replace Existing Container"]
+        VERIFY{"Container<br/>Running?"}
+
+        SSH --> EC2 --> PULL --> REPLACE --> VERIFY
+    end
+
+    %% LIVE APPLICATION
+    subgraph LIVE["05 · LIVE APPLICATION"]
+        direction TB
+        APP["Flask Web Application<br/>Docker Container"]
+        URL["Application Endpoint<br/>EC2_PUBLIC_IP:5000"]
+        APP --> URL
+    end
+
+    GH -->|"Webhook / Configured Trigger"| J
+    BUILD -->|"Docker Push"| DH
+    TAG -->|"SSH Deployment"| SSH
+    VERIFY -->|"YES"| APP
+
+    TEST -->|"FAIL"| STOP["Stop Pipeline<br/>No New Deployment"]
+    VERIFY -->|"NO"| ERROR["Deployment Failure<br/>Investigate Logs"]
+
+    %% Styling
+    classDef source fill:#E8F1FF,stroke:#2563EB,color:#172554,stroke-width:2px;
+    classDef ci fill:#FFF0D9,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef registry fill:#EDE9FE,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
+    classDef cd fill:#DDF7E8,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef live fill:#CFFAFE,stroke:#0891B2,color:#164E63,stroke-width:2px;
+    classDef failure fill:#FEE2E2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+
+    class DEV,GH source;
+    class J,DEP,BUILD ci;
+    class DH,TAG registry;
+    class SSH,EC2,PULL,REPLACE cd;
+    class APP,URL live;
+    class STOP,ERROR failure;
+    class TEST,VERIFY ci;
 ```
+
+### Pipeline Responsibilities
+
+| Phase | Tools | Responsibility |
+|---|---|---|
+| **01 — Source** | Git, GitHub | Store and version application code |
+| **02 — CI** | Jenkins, Python, `unittest` | Install dependencies, run tests, build image |
+| **03 — Registry** | Docker, Docker Hub | Tag and store container images |
+| **04 — CD** | SSH, AWS EC2, Docker | Pull image and replace the application container |
+| **05 — Runtime** | Flask, Docker | Serve the deployed application |
+
+### Deployment Verification
+
+| Condition | Expected behavior |
+|---|---|
+| Unit tests pass | Continue to the Docker build stage |
+| Unit tests fail | Stop before building and deploying |
+| Container starts successfully | Verify its running state |
+| Container fails verification | Report deployment failure and investigate logs |
+
+> **Implementation note:** The diagram represents the intended pipeline flow. Confirm that your Jenkinsfile checks the container state and handles failures as shown. Likewise, the GitHub webhook must be configured and verified before describing triggering as fully automatic.
+
+
 
 ### Deployment Flow
 
