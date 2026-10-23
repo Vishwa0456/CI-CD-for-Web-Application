@@ -1,133 +1,223 @@
 
-# CI/CD Pipeline for a Web Application
+<div align="center">
 
-## Project Overview
+# ⚙️ CI/CD FOR A WEB APPLICATION
 
-This project demonstrates an end-to-end CI/CD pipeline using Jenkins, GitHub, Docker, Docker Hub, and AWS EC2.
+### From Code Commit to Cloud Deployment — Automatically.
 
-Whenever application code is pushed to GitHub, the CI/CD pipeline can check out the latest code, install dependencies, run unit tests, build a Docker image, push the image to Docker Hub, and deploy the updated application to an AWS EC2 instance.
+A complete DevOps project demonstrating automated testing, Docker image creation, registry publishing, and deployment to AWS EC2 using Jenkins.
 
-The goal is to automate application testing, containerization, and deployment while reducing manual effort.
+<br/>
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
+![Jenkins](https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
+
+**Built by Vishwanath Veerapur**
+
+</div>
+
+---
+
+## Overview
+
+This project implements an end-to-end **Continuous Integration and Continuous Deployment (CI/CD)** workflow for a Python Flask web application.
+
+When application code is pushed to GitHub, Jenkins can execute the pipeline to test the application, build a Docker image, push it to Docker Hub, and deploy the latest version to an AWS EC2 instance.
+
+The objective is simple:
+
+> **Automate the path from source code to a running application.**
+
+### Project Highlights
+
+- Automated pipeline execution using Jenkins.
+- Python unit testing before deployment.
+- Docker image creation and version tagging.
+- Image publishing to Docker Hub.
+- Remote deployment to AWS EC2 through SSH.
+- Container replacement and running-state verification.
+- Git-based source code management.
+
+---
 
 ## Architecture
 
-Developer → GitHub → Jenkins → Unit Tests → Docker Build → Docker Hub → AWS EC2 → Running Web Application
+```mermaid
+flowchart TD
+    A["Developer<br/>Writes Application Code"]
+    B["GitHub Repository"]
+    C["Jenkins CI/CD Pipeline"]
+    D["Install Dependencies"]
+    E["Run Unit Tests"]
+    F["Build Docker Image"]
+    G["Push Image to Docker Hub"]
+    H["SSH Deployment to AWS EC2"]
+    I["Pull New Image"]
+    J["Replace Existing Container"]
+    K["Running Flask Application"]
 
-## Technologies Used
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E -->|Tests pass| F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
 
-- **Source Control:** Git, GitHub
-- **CI/CD:** Jenkins
-- **Programming Language:** Python
-- **Web Framework:** Flask
-- **Testing:** Python unittest
-- **Containerization:** Docker
-- **Image Registry:** Docker Hub
-- **Cloud Platform:** AWS EC2
-- **Operating System:** Ubuntu Linux
-- **Deployment:** SSH and Docker
+    E -.->|Tests fail| L["Stop Pipeline"]
+```
 
-## How the Project Works
+### Deployment Flow
 
-### 1. Code Development
+| Stage | Responsibility |
+|---|---|
+| 01 — Source | Store and version application code in GitHub |
+| 02 — CI | Jenkins checks out the repository |
+| 03 — Test | Install dependencies and run unit tests |
+| 04 — Build | Create a versioned Docker image |
+| 05 — Publish | Push image tags to Docker Hub |
+| 06 — Deploy | Connect to EC2 using SSH |
+| 07 — Verify | Confirm that the new container is running |
 
-The developer updates the Flask application and its unit tests locally.
+---
 
-### 2. Push Code to GitHub
+## Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Application logic |
+| Flask | Lightweight web framework |
+| Git & GitHub | Version control and source repository |
+| Jenkins | Pipeline orchestration |
+| Python `unittest` | Automated testing |
+| Docker | Application containerization |
+| Docker Hub | Container image registry |
+| AWS EC2 | Cloud deployment environment |
+| Ubuntu Linux | Server operating system |
+| SSH | Secure remote deployment |
+
+---
+
+## How the CI/CD Pipeline Works
+
+### 01. Code Development
+
+The developer modifies the Flask application and its corresponding unit tests.
+
+### 02. Source Control
 
 Changes are committed and pushed to the GitHub repository.
 
-Repository: https://github.com/Vishwa0456/CI-CD-for-Web-Application
+**Repository:** [CI-CD-for-Web-Application](https://github.com/Vishwa0456/CI-CD-for-Web-Application)
 
-### 3. Jenkins Pipeline
+### 03. Jenkins Checkout
 
-Jenkins checks out the repository and executes the pipeline stages defined in the `Jenkinsfile`.
+Jenkins retrieves the source code and starts executing the configured pipeline.
 
-### 4. Install Dependencies
+GitHub webhook triggering should be configured and verified separately.
 
-Jenkins creates a Python virtual environment and installs the required packages from `requirements.txt`.
+### 04. Dependency Installation
 
-### 5. Run Unit Tests
+Jenkins creates a Python virtual environment and installs the packages specified in `requirements.txt`.
 
-The pipeline runs the unit tests using:
+```bash
+python3 -m venv .venv-ci
+. .venv-ci/bin/activate
+pip install -r requirements.txt
+```
+
+### 05. Automated Testing
+
+The pipeline executes the application's unit tests.
 
 ```bash
 python -m unittest -v
 ```
 
-If the tests fail, the pipeline should stop before building and deploying the application.
+If the tests fail, the pipeline should stop before building and deploying the new image.
 
-### 6. Build Docker Image
+### 06. Docker Image Build
 
-Jenkins builds a Docker image for the Flask application and tags it with the Jenkins build number and `latest`.
-
-Example image tags:
+Jenkins builds the application image and tags it using the build number and `latest`.
 
 ```text
 vishwanath57/cicd-webapp:<BUILD_NUMBER>
 vishwanath57/cicd-webapp:latest
 ```
 
-### 7. Push Image to Docker Hub
+Versioned tags help identify the image associated with a specific Jenkins build.
 
-Jenkins authenticates to Docker Hub using a Jenkins credential and pushes the image tags to the registry.
+### 07. Docker Hub Publishing
 
-Docker Hub repository:
+The generated image is pushed to Docker Hub.
 
-https://hub.docker.com/r/vishwanath57/cicd-webapp
+**Image repository:** [vishwanath57/cicd-webapp](https://hub.docker.com/r/vishwanath57/cicd-webapp)
 
-### 8. Deploy to AWS EC2
+### 08. AWS EC2 Deployment
 
-Jenkins connects to the EC2 instance through SSH and performs the following operations:
+Jenkins connects to the EC2 server using SSH and performs the deployment:
 
-1. Pulls the new Docker image.
-2. Stops the existing application container.
-3. Removes the old container.
-4. Starts a new container using the updated image.
-5. Checks whether the container is running.
+1. Pull the image corresponding to the Jenkins build.
+2. Stop the existing application container.
+3. Remove the old container.
+4. Start the new container.
+5. Verify that the container is running.
 
-### 9. Access the Application
+### 09. Live Application
 
-Application URL:
+The deployed Flask application responds with JSON containing the application name, version, and deployment message.
 
-http://15.252.236.50:5000
+**Application endpoint:** [Open the Web Application](http://15.252.236.50:5000)
 
-The application returns JSON containing its name, version, and deployment message.
+> Note: The endpoint depends on the EC2 instance being running, the application container being healthy, and the required network access being configured.
 
-## Jenkins Pipeline Stages
-
-The pipeline includes the following stages:
-
-1. Checkout
-2. Install Dependencies
-3. Run Unit Tests
-4. Build Docker Image
-5. Push Docker Image
-6. Deploy to EC2
-
-The pipeline also performs Docker logout and reports the final build status.
+---
 
 ## Project Structure
 
 ```text
 cicd-webapp/
-├── app.py
-├── test_app.py
-├── requirements.txt
-├── Dockerfile
-├── Jenkinsfile
-└── README.md
+│
+├── app.py              # Flask application
+├── test_app.py         # Automated unit tests
+├── requirements.txt    # Python dependencies
+├── Dockerfile          # Docker image instructions
+├── Jenkinsfile         # CI/CD pipeline definition
+└── README.md           # Project documentation
 ```
 
-## Run the Application Locally
+---
 
-Clone the repository:
+## Getting Started
+
+### Prerequisites
+
+Install or configure the following:
+
+- Git
+- Python 3
+- Docker
+- Jenkins
+- AWS EC2 instance running Ubuntu
+- Docker Hub account
+
+### Clone the Repository
 
 ```bash
 git clone https://github.com/Vishwa0456/CI-CD-for-Web-Application.git
 cd CI-CD-for-Web-Application
 ```
 
-Create and activate a virtual environment:
+### Run Locally
+
+Create a virtual environment:
 
 ```bash
 python3 -m venv .venv
@@ -140,19 +230,19 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Run unit tests:
+Run the tests:
 
 ```bash
 python -m unittest -v
 ```
 
-Start the Flask application:
+Start the application:
 
 ```bash
 python app.py
 ```
 
-## Run the Application Using Docker
+### Run with Docker
 
 Build the image:
 
@@ -170,103 +260,128 @@ docker run -d \
   cicd-webapp
 ```
 
-Check the container:
+Verify the running container:
 
 ```bash
 docker ps
 docker logs cicd-webapp
 ```
-
-## Jenkins Configuration
-
-The Jenkins pipeline uses the following credential IDs:
-
-- `dockerhub-credentials` — Docker Hub authentication.
-- `ec2-deploy-key` — SSH access to the EC2 instance.
-
-Configure credentials securely in Jenkins rather than storing passwords, access tokens, or private keys in the repository.
-
-The pipeline runs on the Jenkins server and uses its installed Git, Python, Docker, and SSH Agent capabilities.
-
-## GitHub Integration
-
-GitHub is the source code repository for this project.
-
-Configure the Jenkins job and GitHub webhook or polling mechanism according to your chosen Jenkins job type so that new code changes can trigger the pipeline.
-
-README-only changes can be excluded from expensive build and deployment stages through appropriate pipeline conditions or webhook filtering.
-
-## Troubleshooting
-
-### Jenkins Build Fails
-
-- Review the Jenkins Console Output.
-- Verify that the repository URL and branch are correct.
-- Check the Jenkins credentials.
-- Confirm that the required tools are installed.
-
-### Unit Tests Fail
-
-Run the tests locally:
-
-```bash
-python -m unittest -v
-```
-
-Fix failing tests before deploying the application.
-
-### Docker Build or Push Fails
-
-Check Docker availability and confirm that the Docker Hub credential is valid.
-
-```bash
-docker --version
-docker login
-```
-
-Avoid entering credentials in scripts or committing them to Git.
-
-### SSH Deployment Fails
-
-Verify that the EC2 instance is running, the SSH key is configured correctly, and the security group permits SSH from the Jenkins server.
-
-### Application Is Not Accessible
-
-Check the container:
-
-```bash
-docker ps
-docker logs cicd-webapp
-```
-
-Verify the application port, EC2 security group rules, and application process.
-
-## Security Considerations
-
-- Store credentials in Jenkins Credentials.
-- Restrict SSH access to trusted sources.
-- Avoid exposing application ports publicly unless necessary.
-- Use HTTPS and a reverse proxy or load balancer for a production deployment.
-- Consider health checks and rollback procedures for safer deployments.
-- Keep dependencies and container base images updated.
-
-## Future Improvements
-
-- Configure verified GitHub webhook triggering.
-- Skip build and deployment stages for README-only changes.
-- Add Docker image vulnerability scanning.
-- Add application health checks and automated rollback.
-- Introduce Terraform for infrastructure provisioning.
-- Add Prometheus and Grafana monitoring.
-- Configure HTTPS through a reverse proxy or load balancer.
-
-## Project Outcome
-
-The project demonstrates an automated workflow from source code changes to deployment on AWS EC2 using Jenkins and Docker.
-
-The Flask application was successfully updated to version `1.1`, and the pipeline completed its unit tests, image build, image push, and EC2 deployment.
 
 ---
 
-**Author:** Vishwanath Veerapur
+## Jenkins Configuration
+
+The pipeline uses Jenkins-managed credentials rather than hardcoded secrets.
+
+| Credential ID | Purpose |
+|---|---|
+| `dockerhub-credentials` | Docker Hub authentication |
+| `ec2-deploy-key` | SSH authentication to EC2 |
+
+The Jenkins environment must have the required Git, Python, Docker, and SSH Agent capabilities configured.
+
+**Security rule:** Never commit private keys, passwords, access tokens, or other secrets to GitHub.
+
+---
+
+## Validation & Results
+
+The project has successfully demonstrated the following workflow:
+
+- Unit tests passed.
+- Docker image built and tagged.
+- Image pushed to Docker Hub.
+- New image pulled on the EC2 server.
+- Existing application container replaced.
+- New application container verified as running.
+- Flask application updated to version `1.1`.
+
+Example response:
+
+```json
+{
+  "application": "CI/CD Web Application",
+  "version": "1.1",
+  "message": "Version 1.1 deployed automatically through Jenkins CI/CD!"
+}
+```
+
+---
+
+## Troubleshooting
+
+<details>
+<summary><strong>Jenkins pipeline fails</strong></summary>
+
+Review the Jenkins Console Output. Verify repository configuration, credentials, and the availability of required tools.
+
+</details>
+
+<details>
+<summary><strong>Unit tests fail</strong></summary>
+
+Run `python -m unittest -v` locally and resolve failing assertions before deploying.
+
+</details>
+
+<details>
+<summary><strong>Docker build or push fails</strong></summary>
+
+Check Docker availability, image tags, Docker Hub authentication, and Jenkins credential configuration.
+
+</details>
+
+<details>
+<summary><strong>SSH deployment fails</strong></summary>
+
+Verify the EC2 instance state, SSH private-key credential, username, network connectivity, and security group rules.
+
+</details>
+
+<details>
+<summary><strong>Application is inaccessible</strong></summary>
+
+Check `docker ps`, `docker logs cicd-webapp`, the Flask listening port, and EC2 inbound network rules.
+
+</details>
+
+---
+
+## Security & Reliability Improvements
+
+The following improvements are recommended before production use:
+
+- Exclude README-only changes from expensive Docker build and deployment stages.
+- Restrict inbound access to the application port.
+- Use HTTPS through a reverse proxy or load balancer.
+- Add container health checks and automated rollback.
+- Scan Docker images for known vulnerabilities.
+- Use Terraform to manage cloud infrastructure.
+- Add Prometheus and Grafana for monitoring and observability.
+- Use immutable image tags for reliable releases.
+
+---
+
+## Roadmap
+
+- [ ] Verify automatic GitHub webhook triggering.
+- [ ] Skip Docker build and deployment for documentation-only changes.
+- [ ] Add Docker image security scanning.
+- [ ] Implement health checks and rollback.
+- [ ] Provision infrastructure using Terraform.
+- [ ] Add monitoring with Prometheus and Grafana.
+- [ ] Configure HTTPS for the application.
+
+---
+
+<div align="center">
+
+### Built to Learn. Automated to Deploy.
+
+**Vishwanath Veerapur**  
+DevOps | Cloud Computing | CI/CD | AWS
+
+[GitHub Repository](https://github.com/Vishwa0456/CI-CD-for-Web-Application) · [Docker Hub](https://hub.docker.com/r/vishwanath57/cicd-webapp)
+
+</div>
 
