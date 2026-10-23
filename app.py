@@ -8,7 +8,7 @@ def home():
     return jsonify({
         "application": "CI/CD Web Application",
         "version": "1.0",
-        "message": "Welcome! The application is running."
+        "message": "Updated automatically through CI/CD."
     })
 
 
