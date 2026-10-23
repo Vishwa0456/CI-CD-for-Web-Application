@@ -1,7 +1,9 @@
+
 pipeline {
     agent any
 
     environment {
+        DOCKERHUB_USERNAME = 'vishwanath57'
         IMAGE_NAME = 'cicd-webapp'
     }
 
@@ -35,19 +37,49 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                    docker build \
+                      -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER} \
+                      -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest .
                 '''
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USER',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                          --username "$DOCKERHUB_USER" \
+                          --password-stdin
+
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${BUILD_NUMBER}
+                        docker push ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest
+
+                        docker logout
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'CI pipeline completed successfully!'
+            echo 'CI pipeline succeeded and Docker images were published!'
         }
 
         failure {
-            echo 'CI pipeline failed. Check the stage logs.'
+            echo 'Pipeline failed. Check the Console Output for details.'
+        }
+
+        always {
+            sh 'docker logout || true'
         }
     }
 }
