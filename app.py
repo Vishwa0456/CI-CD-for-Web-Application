@@ -7,7 +7,7 @@ app = Flask(__name__)
 def home():
     return jsonify({
         "application": "CI/CD Web Application",
-        "version": "1.0",
+        "version": "1.1",
         "message": "Updated automatically through CI/CD."
     })
 

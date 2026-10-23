@@ -11,7 +11,7 @@ class TestApplication(unittest.TestCase):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json["version"], "1.0")
+        self.assertEqual(response.json["version"], "1.1")
 
     def test_health_endpoint(self):
         response = self.client.get("/health")
