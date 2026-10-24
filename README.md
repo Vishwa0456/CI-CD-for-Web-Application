@@ -253,7 +253,7 @@ Jenkins connects to the EC2 server using SSH and performs the deployment:
 
 The deployed Flask application responds with JSON containing the application name, version, and deployment message.
 
-**Application endpoint:** [Open the Web Application](http://15.252.236.50:5000)
+**Application endpoint:** [Open the Web Application](http://13.234.86.199:5000)
 
 > Note: The endpoint depends on the EC2 instance being running, the application container being healthy, and the required network access being configured.
 

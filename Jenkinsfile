@@ -5,7 +5,7 @@ pipeline {
     environment {
         DOCKERHUB_USERNAME = 'vishwanath57'
         IMAGE_NAME = 'cicd-webapp'
-        EC2_HOST = '15.252.236.50'
+        EC2_HOST = '13.234.86.199'
         EC2_USER = 'ubuntu'
         CONTAINER_NAME = 'cicd-webapp'
         APP_PORT = '5000'
